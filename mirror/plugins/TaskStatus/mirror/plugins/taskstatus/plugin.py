@@ -75,6 +75,11 @@ class Plugin(PluginBase):
             log.info(("Didn't set `status_file` in plugin.ini in `%s` section"
                       ", use default one: %s"), _plugin_name, self.status_file)
 
+        try:
+            self.auto_remove = config[_plugin_name]["auto_remove"]
+        except:
+            self.auto_remove = True
+
         self.enabled = True
         status_dir   = os.path.dirname(self.status_file)
         if not os.path.exists(status_dir):
@@ -165,9 +170,10 @@ class Plugin(PluginBase):
                 log.warning("Parse json file(%s) failed: %s", self.status_file, e)
                 task_status = {}
             else:
-                # Remove tasks that already been removed from config file
-                list(map(lambda taskname: task_status.pop(taskname),
-                    filter(lambda taskname: taskname not in scheduler.config, list(task_status))))
+                if self.auto_remove:
+                    # Remove tasks that already been removed from config file
+                    list(map(lambda taskname: task_status.pop(taskname),
+                                                    filter(lambda taskname: taskname not in scheduler.config, list(task_status))))
         else:
             task_status = {}
 
